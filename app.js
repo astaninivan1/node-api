@@ -1,23 +1,27 @@
 const express = require('express');
-const MongoClient = require('mongodb').MongoClient;
+const mongoose = require('mongoose');
 
 const app = express();
-const mongoClient = new MongoClient('mongodb://localhost:27017/', {useUnifiedTopology: true});
-mongoClient.connect((err, client) => {
-   const db = client.db("usersdb");
-   const collection = db.collection("users");
-   let user = {name: "Tom", age: 23};
-   collection.insertOne(user, function(err, result){
+const jsonParser = express.json();
+const apiRouter = express.Router();
+const usersRouter = express.Router();
 
-      if(err){
-         return console.log(err);
-      }
-      console.log(result.ops);
-      client.close();
-   });
-});
+const Schema = mongoose.Schema;
+const userScheme = new Schema({name: String, age: Number}, {versionKey: false});
+const User = mongoose.model("User", userScheme);
 
-app.get('/', (req, res) => {
-   res.send('<h1>Hello</h1>')
-});
-app.listen(3000);
+
+mongoose.connect('mongodb://localhost:27017/usersdb',{ useUnifiedTopology: true, useNewUrlParser: true, useFindAndModify: false},
+    (err) => {
+    if(err) return console.log(err);
+    app.listen(3000, () => console.log('Service started!'));
+    app.use('/api', jsonParser, apiRouter);
+})
+
+apiRouter.use('/users', usersRouter);
+usersRouter.get('/', ((req, res) => {
+    User.find({}, (err, users) => {
+        if(err) return console.log(err);
+        res.send(users)
+    });
+}));
