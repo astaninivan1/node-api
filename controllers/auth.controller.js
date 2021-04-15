@@ -13,30 +13,33 @@ const jwtOptions = {
     secretOrKey: 'tasmanianDevil'
 }
 
-const strategy = new JwtStrategy(jwtOptions, function(jwt_payload, next) {
-    User.findById(jwt_payload.id, (err, user) => {
-        if (user) {
-            next(null, user);
-        } else {
-            next(null, false);
-        }
-    })
+const strategy = new JwtStrategy(jwtOptions, async (jwt_payload, next) => {
+    try {
+        const user = await User.findById(jwt_payload.id);
+        next(null, !!user);
+    } catch (err) {
+        console.error(err);
+        next(null, false);
+    }
 });
-
 passport.use('jwt', strategy);
 
-exports.login = (req, res) => {
-    User.findOne({username: req.body.username}, (err, user) => {
+exports.login = async (req, res) => {
+    try {
+        const user = await User.findOne({username: req.body.username});
         if (!user) {
-            res.status(404).json('user not found');
+            res.status(404).json('Пользователь с таким именем не существует');
         }
 
         if (user.password !== req.body.password) {
-            res.status(401).json('Incorrect password');
+            res.status(401).json('Неверный пароль');
         }
 
-        const payload = {id: 1};
+        const payload = {id: user.id};
         const token = jwt.sign(payload, jwtOptions.secretOrKey);
         res.json({message: "ok", token: token});
-    });
+    } catch (err) {
+        res.status(400).json(400);
+        console.error(err);
+    }
 };
