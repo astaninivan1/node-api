@@ -6,3 +6,14 @@ exports.getAll = (req, res) => {
         res.send(users);
     });
 }
+
+exports.signUp = (req, res) => {
+    const user = new User({username: req.body.username, password: req.body.password});
+    user.save((err => {
+        if (err) {
+            console.log(err);
+            return err;
+        }
+        res.json(user);
+    }));
+}
