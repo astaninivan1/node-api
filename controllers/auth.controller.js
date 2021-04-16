@@ -1,28 +1,7 @@
 const jwt = require('jsonwebtoken');
+
 const User = require('../models/user.model');
-
-const passport = require("passport");
-const passportJWT = require("passport-jwt");
-
-const ExtractJwt = passportJWT.ExtractJwt;
-const JwtStrategy = passportJWT.Strategy;
-
-
-const jwtOptions = {
-    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: 'tasmanianDevil'
-}
-
-const strategy = new JwtStrategy(jwtOptions, async (jwt_payload, next) => {
-    try {
-        const user = await User.findById(jwt_payload.id);
-        next(null, !!user);
-    } catch (err) {
-        console.error(err);
-        next(null, false);
-    }
-});
-passport.use('jwt', strategy);
+const jwtOptions = require('../shared/passport-settings').jwtOptions
 
 exports.login = async (req, res) => {
     try {
@@ -39,7 +18,21 @@ exports.login = async (req, res) => {
         const token = jwt.sign(payload, jwtOptions.secretOrKey);
         res.json({message: "ok", token: token});
     } catch (err) {
-        res.status(400).json(400);
+        res.status(400).json(err.message);
         console.error(err);
     }
 };
+
+exports.signUp = async (req, res) => {
+    try {
+        const isExists = await User.exists({username: req.body.username});
+        if (isExists) {
+            throw new Error('Пользователь с таким именем существует');
+        }
+        const user = new User({username: req.body.username, password: req.body.password});
+        res.json(await user.save());
+    } catch (err) {
+        res.status(400).json(err.message);
+        console.error(err);
+    }
+}

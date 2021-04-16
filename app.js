@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const apiRouter = require('./routes/api.router');
-const passport = require('passport');
+const passport = require('./shared/passport-settings').passport;
 
 const app = express();
 const jsonParser = express.json();

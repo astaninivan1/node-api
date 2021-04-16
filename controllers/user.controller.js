@@ -2,21 +2,18 @@ const User = require('../models/user.model');
 
 exports.getAll = async (req, res) => {
     try {
-        res.send(await User.find({}));
+        res.json(await User.find({}));
     } catch (err) {
         res.status(400).json(err.message);
         console.error(err);
     }
 }
 
-exports.signUp = async (req, res) => {
+exports.info = async (req, res) => {
     try {
-        const isExists = await User.exists({username: req.body.username});
-        if (isExists) {
-            throw new Error('Пользователь с таким именем существует');
-        }
-        const user = new User({username: req.body.username, password: req.body.password});
-        res.json(await user.save());
+        const userId = req.params.id;
+        const user = await User.findById(userId).select('-password');
+        res.json(user)
     } catch (err) {
         res.status(400).json(err.message);
         console.error(err);
